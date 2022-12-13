@@ -42,6 +42,7 @@ class AlexNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(4096, num_classes),
         )
+        self.load_state_dict(torch.load(model_urls['alexnet'], strict=False))
 
     def forward(self, x):
         features = self.features(x)
@@ -54,14 +55,14 @@ class ReverseLayerF(Function):
     # Forwards identity
     # Sends backward reversed gradients
     @staticmethod
-    def forward(ctx, x, alpha):
-        ctx.alpha = alpha
+    def forward(ctx, x, Lambda):
+        ctx.Lambda = Lambda
 
         return x.view_as(x)
 
     @staticmethod
     def backward(ctx, grad_output):
-        output = grad_output.neg() * ctx.alpha
+        output = grad_output.neg() * ctx.Lambda
 
         return output, None
 
@@ -80,18 +81,14 @@ class AlexNetDA(nn.Module):
     last_l_idx = len(self.domain_classifier) - 1
     self.domain_classifier[last_l_idx] = nn.Linear(4096, num_domains)
 
-  def forward(self, images, alpha=None):
+  def forward(self, images, Lambda=None):
     features = self.features(images)
     features = features.view(features.size(0), -1)
     
-    if alpha is not None:
+    if Lambda is not None:
         # perform adaptation round
         # logits output dim is num_domains
-        features = ReverseLayerF.apply(features, alpha)
+        features = ReverseLayerF.apply(features, Lambda)
         return self.domain_classifier(features)
 
     return self.classifier(features)
-
-
-  
-

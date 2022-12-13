@@ -65,9 +65,9 @@ class PACS(VisionDataset):
         length = len(self.labels) # Provide a way to get the length (number of elements) of the dataset
         return length
     
-    def stratified_sample(self, n_groups):
+    def stratified_sample(self, train_size = 0.5, test_size = 0.5):
       import sklearn.model_selection
-      return sklearn.model_selection.train_test_split([i for i in range(len(self.labels))], train_size = 0.5, test_size = 0.5, stratify = self.labels)
+      return sklearn.model_selection.train_test_split([i for i in range(len(self.labels))], train_size = train_size, test_size = test_size, stratify = self.labels)
       '''sample_idxs = [[] for i in range(n_groups)]
       for key, class_indices in self.img_idx_per_class.items():
         size = len(class_indices) // n_groups
